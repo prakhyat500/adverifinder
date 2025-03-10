@@ -1,11 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { validateURL } from '@/utils/validation';
-import { ChevronRight, AlertTriangle, Check, XCircle, Globe, Shield } from 'lucide-react';
+import { AlertTriangle, Check, XCircle, Globe, Shield, Upload, Instagram, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface VerificationResult {
   isScam: boolean;
@@ -24,14 +25,24 @@ interface VerificationResult {
     contact: {
       hasValidContactInfo: boolean;
     };
+    brand: {
+      name: string;
+      isVerified: boolean;
+    };
   };
+  timestamp: string;
+  imageUrl?: string;
 }
 
 const AdVerifier = () => {
+  const { toast } = useToast();
   const [url, setUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
@@ -41,35 +52,79 @@ const AdVerifier = () => {
     }
   };
   
-  const handleVerify = () => {
-    const validation = validateURL(url);
-    if (!validation.isValid) {
-      setUrlError(validation.message || 'Please enter a valid URL');
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file (JPEG, PNG)",
+        variant: "destructive"
+      });
       return;
     }
     
-    setUrlError('');
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      setUploadedImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const handleVerify = () => {
+    if (uploadMethod === 'url') {
+      const validation = validateURL(url);
+      if (!validation.isValid) {
+        setUrlError(validation.message || 'Please enter a valid URL');
+        return;
+      }
+      setUrlError('');
+    } else if (!uploadedImage) {
+      toast({
+        title: "No image selected",
+        description: "Please upload an image to verify",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsVerifying(true);
     
     // Simulate API verification
     setTimeout(() => {
       // Simulate fake ad detection with a random result
-      const isFake = Math.random() > 0.5;
+      const isFake = Math.random() > 0.4; // Higher chance of fake for demonstration
+      const brandNames = ['FashionChic', 'UrbanThreads', 'LuxeWear', 'StylePlus', 'TrendyFits'];
+      const randomBrand = brandNames[Math.floor(Math.random() * brandNames.length)];
       
-      setResult({
+      // Save to history in localStorage
+      const newResult: VerificationResult = {
         isScam: isFake,
         confidence: Math.floor(isFake ? 75 + Math.random() * 20 : 15 + Math.random() * 30),
         warnings: isFake 
           ? [
-              'Domain registered recently',
-              'Unrealistic claims detected',
-              'Poor grammar and spelling',
+              'Suspicious Instagram account age',
+              'Unrealistic discount claims',
+              'Similar designs to original brand',
+              'Poor customer reviews',
               'Missing contact information'
             ].slice(0, Math.floor(Math.random() * 3) + 1)
           : [],
         details: {
           domain: {
-            age: isFake ? '2 days' : '3 years',
+            age: isFake ? '2 weeks' : '3 years',
             suspicious: isFake
           },
           content: {
@@ -79,57 +134,178 @@ const AdVerifier = () => {
           },
           contact: {
             hasValidContactInfo: !isFake
+          },
+          brand: {
+            name: randomBrand,
+            isVerified: !isFake
           }
-        }
-      });
+        },
+        timestamp: new Date().toISOString(),
+        imageUrl: uploadedImage || undefined
+      };
       
+      // Save to localStorage history
+      const history = JSON.parse(localStorage.getItem('adVerificationHistory') || '[]');
+      history.unshift(newResult);
+      localStorage.setItem('adVerificationHistory', JSON.stringify(history.slice(0, 10))); // Keep last 10 items
+      
+      // Save last result
+      localStorage.setItem('lastVerificationResult', JSON.stringify(newResult));
+      
+      setResult(newResult);
       setIsVerifying(false);
+      
+      // Show toast notification
+      toast({
+        title: isFake ? "Potential Fake Ad Detected" : "Verification Passed",
+        description: isFake 
+          ? `This appears to be a fake ${randomBrand} ad with ${newResult.confidence}% confidence.`
+          : `This appears to be a legitimate ${randomBrand} ad.`,
+        variant: isFake ? "destructive" : "default"
+      });
     }, 2500);
+  };
+  
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+  
+  const switchUploadMethod = (method: 'url' | 'file') => {
+    setUploadMethod(method);
+    setResult(null);
   };
   
   return (
     <div className="w-full max-w-3xl mx-auto">
       <Card className="shadow-lg border-0 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-blue-500/10 to-purple-500/10">
-          <CardTitle className="text-2xl font-display">Ad Verification Tool</CardTitle>
+        <CardHeader className="bg-gradient-to-r from-pink-500/10 to-purple-500/10">
+          <CardTitle className="text-2xl font-display flex items-center">
+            <Instagram className="mr-2 h-6 w-6 text-pink-500" />
+            Instagram Ad Verification Tool
+          </CardTitle>
           <CardDescription>
-            Enter the URL of an advertisement to verify its authenticity
+            Verify the authenticity of clothing brand ads you see on Instagram
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-grow">
-              <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                placeholder="https://example.com/ad"
-                value={url}
-                onChange={handleUrlChange}
-                className={cn(
-                  "pl-10 h-11 transition-all", 
-                  urlError ? "border-red-500" : ""
-                )}
-              />
-            </div>
-            <Button 
-              onClick={handleVerify} 
-              disabled={isVerifying} 
-              className="h-11 min-w-[120px] transition-all"
+          <div className="flex space-x-4 mb-6">
+            <Button
+              variant={uploadMethod === 'url' ? 'default' : 'outline'}
+              onClick={() => switchUploadMethod('url')}
+              className="flex-1"
             >
-              {isVerifying ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Verifying
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  Verify <ChevronRight className="ml-1 h-4 w-4" />
-                </span>
-              )}
+              <Globe className="mr-2 h-4 w-4" />
+              Verify by URL
+            </Button>
+            <Button
+              variant={uploadMethod === 'file' ? 'default' : 'outline'}
+              onClick={() => switchUploadMethod('file')}
+              className="flex-1"
+            >
+              <Image className="mr-2 h-4 w-4" />
+              Verify by Image
             </Button>
           </div>
+
+          {uploadMethod === 'url' ? (
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="relative flex-grow">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                  placeholder="https://www.instagram.com/p/example-post/"
+                  value={url}
+                  onChange={handleUrlChange}
+                  className={cn(
+                    "pl-10 h-11 transition-all", 
+                    urlError ? "border-red-500" : ""
+                  )}
+                />
+              </div>
+              <Button 
+                onClick={handleVerify} 
+                disabled={isVerifying} 
+                className="h-11 min-w-[120px] transition-all"
+              >
+                {isVerifying ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Verifying
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    Verify
+                  </span>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/jpeg,image/png,image/jpg"
+                className="hidden"
+              />
+              
+              <div 
+                className={cn(
+                  "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                  uploadedImage ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-primary hover:bg-gray-50"
+                )}
+                onClick={triggerFileUpload}
+              >
+                {uploadedImage ? (
+                  <div className="space-y-4">
+                    <div className="w-full max-h-64 overflow-hidden rounded-md mx-auto">
+                      <img 
+                        src={uploadedImage} 
+                        alt="Uploaded ad" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500">Click to change image</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div>
+                      <p className="text-base font-medium">
+                        Drop image here or click to upload
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Supports JPEG and PNG (max 5MB)
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <Button 
+                onClick={handleVerify} 
+                disabled={isVerifying || !uploadedImage}
+                className="w-full h-11"
+              >
+                {isVerifying ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Verifying
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    Verify this Instagram Ad
+                  </span>
+                )}
+              </Button>
+            </div>
+          )}
+          
           {urlError && (
             <p className="text-red-500 text-sm mt-2 animate-fade-in">{urlError}</p>
           )}
@@ -150,8 +326,8 @@ const AdVerifier = () => {
                 <div>
                   <h3 className="text-lg font-medium">
                     {result.isScam 
-                      ? "Warning: Potential Fake Advertisement" 
-                      : "Verification Passed: Likely Legitimate"}
+                      ? `Warning: Potential Fake ${result.details.brand.name} Ad` 
+                      : `Verification Passed: Legitimate ${result.details.brand.name} Ad`}
                   </h3>
                   <p className="text-sm opacity-90">
                     {result.isScam 
@@ -179,7 +355,12 @@ const AdVerifier = () => {
                 <h4 className="font-medium mb-3">Detailed Analysis</h4>
                 <div className="space-y-4">
                   <AnalysisItem 
-                    title="Domain Age" 
+                    title="Brand Name" 
+                    value={result.details.brand.name}
+                    status={result.details.brand.isVerified}
+                  />
+                  <AnalysisItem 
+                    title="Instagram Account Age" 
                     value={result.details.domain.age}
                     status={!result.details.domain.suspicious}
                   />
@@ -210,7 +391,7 @@ const AdVerifier = () => {
         </CardContent>
         <CardFooter className="bg-gray-50 border-t flex flex-col items-start p-6">
           <p className="text-sm text-gray-600">
-            <strong>Remember:</strong> Even with our advanced verification tools, always use your judgment and caution when interacting with online advertisements.
+            <strong>Remember:</strong> This tool helps identify potentially fake Instagram clothing ads, but always research brands thoroughly before making a purchase decision.
           </p>
         </CardFooter>
       </Card>
