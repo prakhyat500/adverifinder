@@ -28,6 +28,12 @@ export const AuthService = {
 
       if (error) throw error;
       console.log('Signup response from Supabase:', data);
+      
+      // Store auth state in localStorage for persistence
+      if (data.user) {
+        localStorage.setItem('isAuthenticated', 'true');
+      }
+      
       return { success: true, data };
     } catch (error: any) {
       console.error('Error signing up:', error.message);
@@ -48,6 +54,12 @@ export const AuthService = {
 
       if (error) throw error;
       console.log('Login response from Supabase:', data);
+      
+      // Store auth state in localStorage for persistence
+      if (data.user) {
+        localStorage.setItem('isAuthenticated', 'true');
+      }
+      
       return { success: true, data };
     } catch (error: any) {
       console.error('Error logging in:', error.message);
@@ -62,6 +74,10 @@ export const AuthService = {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear auth state from localStorage
+      localStorage.removeItem('isAuthenticated');
+      
       return { success: true };
     } catch (error: any) {
       console.error('Error logging out:', error.message);
@@ -76,9 +92,18 @@ export const AuthService = {
     try {
       const { data, error } = await supabase.auth.getUser();
       if (error) throw error;
+      
+      // Update localStorage based on current session
+      if (data.user) {
+        localStorage.setItem('isAuthenticated', 'true');
+      } else {
+        localStorage.removeItem('isAuthenticated');
+      }
+      
       return { success: true, user: data.user };
     } catch (error: any) {
       console.error('Error getting current user:', error.message);
+      localStorage.removeItem('isAuthenticated');
       return { success: false, user: null };
     }
   },
