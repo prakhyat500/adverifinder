@@ -1,9 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Use environment variables if available, otherwise use placeholders
-// In a production app, these values should always come from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-url.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+// Fail with a helpful error message if environment variables are missing
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    'Supabase URL and Anon Key are required. Please create a .env file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY variables.'
+  );
+}
+
+export const supabase = createClient(
+  supabaseUrl || '',
+  supabaseAnonKey || ''
+);
