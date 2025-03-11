@@ -36,6 +36,7 @@ export interface VerificationResult {
 
 export const AdService = {
   async verifyAd({ url, imageData }: VerificationRequest) {
+    console.log('Starting ad verification process:', { url, hasImage: !!imageData });
     try {
       // For now, we'll simulate the verification process
       // In a real implementation, you would call an AI service or backend API
@@ -43,6 +44,7 @@ export const AdService = {
       // If imageData is provided, we would upload it to Supabase storage
       let imageUrl;
       if (imageData) {
+        console.log('Preparing to upload image to Supabase storage');
         // Extract the base64 data (remove the prefix like "data:image/png;base64,")
         const base64Data = imageData.split(',')[1];
         if (!base64Data) throw new Error('Invalid image data');
@@ -51,6 +53,7 @@ export const AdService = {
         const fileName = `ad-images/${Date.now()}.png`;
         
         // Upload to Supabase storage
+        console.log('Uploading image to bucket: ad-verifications');
         const { data, error } = await supabase.storage
           .from('ad-verifications')
           .upload(fileName, Buffer.from(base64Data, 'base64'), {
@@ -58,6 +61,7 @@ export const AdService = {
           });
           
         if (error) throw error;
+        console.log('Image uploaded successfully:', data);
         
         // Get the public URL
         const { data: { publicUrl } } = supabase.storage
@@ -65,6 +69,7 @@ export const AdService = {
           .getPublicUrl(fileName);
           
         imageUrl = publicUrl;
+        console.log('Image public URL:', imageUrl);
       }
       
       // Simulate API verification with a random result
@@ -73,8 +78,10 @@ export const AdService = {
       const randomBrand = brandNames[Math.floor(Math.random() * brandNames.length)];
       
       // Get current user
+      console.log('Getting current user from Supabase');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
+      console.log('Current user:', user.id);
       
       // Create the verification result
       const verificationResult: Omit<VerificationResult, 'id'> = {
@@ -113,6 +120,7 @@ export const AdService = {
       };
       
       // Save the verification result to the database
+      console.log('Saving verification result to Supabase');
       const { data, error } = await supabase
         .from('ad_verifications')
         .insert([verificationResult])
@@ -120,6 +128,7 @@ export const AdService = {
         .single();
         
       if (error) throw error;
+      console.log('Verification result saved:', data);
       
       return { 
         success: true, 
@@ -135,9 +144,11 @@ export const AdService = {
   },
   
   async getUserVerifications() {
+    console.log('Fetching user verification history');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
+      console.log('Current user:', user.id);
       
       const { data, error } = await supabase
         .from('ad_verifications')
@@ -146,6 +157,7 @@ export const AdService = {
         .order('createdAt', { ascending: false });
         
       if (error) throw error;
+      console.log('Verification history fetched:', data?.length, 'records');
       
       return { 
         success: true, 

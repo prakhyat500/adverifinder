@@ -14,6 +14,7 @@ export interface LoginCredentials {
 
 export const AuthService = {
   async signUp({ email, password, name }: SignUpCredentials) {
+    console.log('Sending signup request to Supabase:', { email, name });
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -26,6 +27,7 @@ export const AuthService = {
       });
 
       if (error) throw error;
+      console.log('Signup response from Supabase:', data);
       return { success: true, data };
     } catch (error: any) {
       console.error('Error signing up:', error.message);
@@ -37,6 +39,7 @@ export const AuthService = {
   },
 
   async login({ email, password }: LoginCredentials) {
+    console.log('Sending login request to Supabase:', { email });
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -44,6 +47,7 @@ export const AuthService = {
       });
 
       if (error) throw error;
+      console.log('Login response from Supabase:', data);
       return { success: true, data };
     } catch (error: any) {
       console.error('Error logging in:', error.message);
