@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,32 +6,7 @@ import { validateURL } from '@/utils/validation';
 import { AlertTriangle, Check, XCircle, Globe, Shield, Upload, Instagram, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-
-interface VerificationResult {
-  isScam: boolean;
-  confidence: number;
-  warnings: string[];
-  details: {
-    domain: {
-      age: string;
-      suspicious: boolean;
-    };
-    content: {
-      hasUnrealisticClaims: boolean;
-      hasPressureTactics: boolean;
-      hasPoorGrammar: boolean;
-    };
-    contact: {
-      hasValidContactInfo: boolean;
-    };
-    brand: {
-      name: string;
-      isVerified: boolean;
-    };
-  };
-  timestamp: string;
-  imageUrl?: string;
-}
+import { AdService, VerificationResult } from '@/services/ad.service';
 
 const AdVerifier = () => {
   const { toast } = useToast();
@@ -56,7 +30,6 @@ const AdVerifier = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check if file is an image
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid file type",
@@ -66,7 +39,6 @@ const AdVerifier = () => {
       return;
     }
     
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -83,7 +55,7 @@ const AdVerifier = () => {
     reader.readAsDataURL(file);
   };
   
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (uploadMethod === 'url') {
       const validation = validateURL(url);
       if (!validation.isValid) {
@@ -102,68 +74,38 @@ const AdVerifier = () => {
     
     setIsVerifying(true);
     
-    // Simulate API verification
-    setTimeout(() => {
-      // Simulate fake ad detection with a random result
-      const isFake = Math.random() > 0.4; // Higher chance of fake for demonstration
-      const brandNames = ['FashionChic', 'UrbanThreads', 'LuxeWear', 'StylePlus', 'TrendyFits'];
-      const randomBrand = brandNames[Math.floor(Math.random() * brandNames.length)];
-      
-      // Save to history in localStorage
-      const newResult: VerificationResult = {
-        isScam: isFake,
-        confidence: Math.floor(isFake ? 75 + Math.random() * 20 : 15 + Math.random() * 30),
-        warnings: isFake 
-          ? [
-              'Suspicious Instagram account age',
-              'Unrealistic discount claims',
-              'Similar designs to original brand',
-              'Poor customer reviews',
-              'Missing contact information'
-            ].slice(0, Math.floor(Math.random() * 3) + 1)
-          : [],
-        details: {
-          domain: {
-            age: isFake ? '2 weeks' : '3 years',
-            suspicious: isFake
-          },
-          content: {
-            hasUnrealisticClaims: isFake,
-            hasPressureTactics: isFake && Math.random() > 0.5,
-            hasPoorGrammar: isFake && Math.random() > 0.3
-          },
-          contact: {
-            hasValidContactInfo: !isFake
-          },
-          brand: {
-            name: randomBrand,
-            isVerified: !isFake
-          }
-        },
-        timestamp: new Date().toISOString(),
-        imageUrl: uploadedImage || undefined
-      };
-      
-      // Save to localStorage history
-      const history = JSON.parse(localStorage.getItem('adVerificationHistory') || '[]');
-      history.unshift(newResult);
-      localStorage.setItem('adVerificationHistory', JSON.stringify(history.slice(0, 10))); // Keep last 10 items
-      
-      // Save last result
-      localStorage.setItem('lastVerificationResult', JSON.stringify(newResult));
-      
-      setResult(newResult);
-      setIsVerifying(false);
-      
-      // Show toast notification
-      toast({
-        title: isFake ? "Potential Fake Ad Detected" : "Verification Passed",
-        description: isFake 
-          ? `This appears to be a fake ${randomBrand} ad with ${newResult.confidence}% confidence.`
-          : `This appears to be a legitimate ${randomBrand} ad.`,
-        variant: isFake ? "destructive" : "default"
+    try {
+      const { success, result, error } = await AdService.verifyAd({
+        url: uploadMethod === 'url' ? url : undefined,
+        imageData: uploadMethod === 'file' ? uploadedImage : undefined
       });
-    }, 2500);
+      
+      if (success && result) {
+        setResult(result);
+        
+        toast({
+          title: result.isScam ? "Potential Fake Ad Detected" : "Verification Passed",
+          description: result.isScam 
+            ? `This appears to be a fake ${result.details.brand.name} ad with ${result.confidence}% confidence.`
+            : `This appears to be a legitimate ${result.details.brand.name} ad.`,
+          variant: result.isScam ? "destructive" : "default"
+        });
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: error || "Failed to verify the ad. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
   
   const triggerFileUpload = () => {

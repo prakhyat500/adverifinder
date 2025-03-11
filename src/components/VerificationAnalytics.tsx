@@ -1,22 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, AlertTriangle, PieChart, BarChart, TrendingUp } from 'lucide-react';
 import { cn } from "@/lib/utils";
-
-interface VerificationResult {
-  isScam: boolean;
-  confidence: number;
-  details: {
-    brand: {
-      name: string;
-    };
-  };
-  timestamp: string;
-}
+import { AdService, VerificationResult } from '@/services/ad.service';
+import { useToast } from '@/hooks/use-toast';
 
 const VerificationAnalytics = () => {
+  const { toast } = useToast();
   const [history, setHistory] = useState<VerificationResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
     fake: 0,
@@ -25,41 +17,61 @@ const VerificationAnalytics = () => {
   });
 
   useEffect(() => {
-    // Load history from localStorage
-    const savedHistory = localStorage.getItem('adVerificationHistory');
-    if (savedHistory) {
-      const parsedHistory = JSON.parse(savedHistory);
-      setHistory(parsedHistory);
-      
-      // Calculate statistics
-      const stats = {
-        total: parsedHistory.length,
-        fake: 0,
-        authentic: 0,
-        brands: {} as Record<string, { total: number, fake: number }>
-      };
-      
-      parsedHistory.forEach((item: VerificationResult) => {
-        if (item.isScam) {
-          stats.fake++;
-        } else {
-          stats.authentic++;
-        }
+    async function loadVerifications() {
+      setIsLoading(true);
+      try {
+        const { success, verifications, error } = await AdService.getUserVerifications();
         
-        const brandName = item.details.brand.name;
-        if (!stats.brands[brandName]) {
-          stats.brands[brandName] = { total: 0, fake: 0 };
+        if (success && verifications) {
+          setHistory(verifications);
+          
+          // Calculate statistics
+          const stats = {
+            total: verifications.length,
+            fake: 0,
+            authentic: 0,
+            brands: {} as Record<string, { total: number, fake: number }>
+          };
+          
+          verifications.forEach((item: VerificationResult) => {
+            if (item.isScam) {
+              stats.fake++;
+            } else {
+              stats.authentic++;
+            }
+            
+            const brandName = item.details.brand.name;
+            if (!stats.brands[brandName]) {
+              stats.brands[brandName] = { total: 0, fake: 0 };
+            }
+            
+            stats.brands[brandName].total++;
+            if (item.isScam) {
+              stats.brands[brandName].fake++;
+            }
+          });
+          
+          setStats(stats);
+        } else if (error) {
+          toast({
+            title: "Error",
+            description: error || "Failed to load verification history",
+            variant: "destructive"
+          });
         }
-        
-        stats.brands[brandName].total++;
-        if (item.isScam) {
-          stats.brands[brandName].fake++;
-        }
-      });
-      
-      setStats(stats);
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "An unexpected error occurred",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, []);
+    
+    loadVerifications();
+  }, [toast]);
 
   // Get top brands by verification count
   const topBrands = Object.entries(stats.brands)

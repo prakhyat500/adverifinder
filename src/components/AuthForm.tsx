@@ -9,6 +9,7 @@ import { validateEmail, validatePassword, validateName } from '@/utils/validatio
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { AuthService, LoginCredentials, SignUpCredentials } from '@/services/auth.service';
 
 interface AuthFormProps {
   type: 'login' | 'signup';
@@ -98,21 +99,51 @@ const AuthForm = ({ type, className }: AuthFormProps) => {
     
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Store authentication state in localStorage (for demo purposes)
-      localStorage.setItem('isAuthenticated', 'true');
+    try {
+      let response;
       
+      if (type === 'login') {
+        const credentials: LoginCredentials = {
+          email: formState.email.value,
+          password: formState.password.value
+        };
+        
+        response = await AuthService.login(credentials);
+      } else {
+        const credentials: SignUpCredentials = {
+          name: formState.name.value,
+          email: formState.email.value,
+          password: formState.password.value
+        };
+        
+        response = await AuthService.signUp(credentials);
+      }
+      
+      if (response.success) {
+        toast({
+          title: type === 'login' ? "Welcome back!" : "Account created!",
+          description: type === 'login' 
+            ? "You've successfully logged in to your account." 
+            : "Your account has been created successfully.",
+        });
+        
+        navigate('/dashboard');
+      } else {
+        toast({
+          title: "Authentication Error",
+          description: response.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
       toast({
-        title: type === 'login' ? "Welcome back!" : "Account created!",
-        description: type === 'login' 
-          ? "You've successfully logged in to your account." 
-          : "Your account has been created successfully.",
+        title: "Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
       });
-      
+    } finally {
       setIsLoading(false);
-      navigate('/dashboard');
-    }, 1500);
+    }
   };
   
   return (

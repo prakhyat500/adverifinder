@@ -1,69 +1,51 @@
-# Welcome to your Lovable project
 
-## Project info
+# InstaAdVerifier - Backend Integration Guide
 
-**URL**: https://lovable.dev/projects/f45a4593-2a8c-4de7-a60c-f0b1053e1cb4
+This guide explains how to set up and integrate the Supabase backend for the InstaAdVerifier application.
 
-## How can I edit this code?
+## Prerequisites
 
-There are several ways of editing your application.
+1. A Supabase account (sign up at [supabase.com](https://supabase.com))
+2. A new Supabase project
 
-**Use Lovable**
+## Setup Steps
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f45a4593-2a8c-4de7-a60c-f0b1053e1cb4) and start prompting.
+### 1. Configure Supabase
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Create a new Supabase project from the dashboard
+2. Note your project URL and anon key from the project settings
+3. Run the SQL script in `supabase/schema.sql` in the Supabase SQL editor to set up your database schema
 
-**Use your preferred IDE**
+### 2. Update Environment Variables
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Create a `.env` file in the root of the project with the following variables:
+   ```
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. Update the Supabase client configuration in `src/lib/supabase.ts` with your project URL and anon key or configure it to use environment variables:
+   ```typescript
+   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+   ```
 
-Follow these steps:
+### 3. Start the App
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Features Implemented
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **User Authentication**: Sign up, login, and user profile management
+- **Ad Verification**: Verify Instagram ads with URL or image upload
+- **Verification History**: Store and retrieve verification results
+- **Analytics**: View statistics about verified ads
 
-**Use GitHub Codespaces**
+## Next Steps
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/f45a4593-2a8c-4de7-a60c-f0b1053e1cb4) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+- Implement real ad verification logic (replacing the current simulation)
+- Add more detailed user profiles
+- Enhance analytics with charts and trends
