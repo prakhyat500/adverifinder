@@ -9,7 +9,6 @@ import About from './pages/About';
 import Features from './pages/Features';
 import NotFound from './pages/NotFound';
 import Reviews from './pages/Reviews';
-import WebsiteAnalyzer from './pages/WebsiteAnalyzer';
 import VirtualTryOn from './pages/VirtualTryOn';
 import AIStyler from './pages/AIStyler';
 import Shop from './pages/Shop';
@@ -27,7 +26,6 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/features" element={<Features />} />
         <Route path="/reviews" element={<Reviews />} />
-        <Route path="/analyzer" element={<WebsiteAnalyzer />} />
         <Route path="/try-on" element={<VirtualTryOn />} />
         <Route path="/styler" element={<AIStyler />} />
         <Route path="/shop" element={<Shop />} />

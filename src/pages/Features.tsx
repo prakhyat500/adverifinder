@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AdAnalyzer from '@/components/AdAnalyzer';
 import { 
   Image, 
   History, 
@@ -10,7 +11,9 @@ import {
   AlertTriangle, 
   Search,
   Database,
-  MessageSquare 
+  MessageSquare,
+  Shirt,
+  Sparkles
 } from 'lucide-react';
 
 const Features = () => {
@@ -19,10 +22,10 @@ const Features = () => {
     window.scrollTo(0, 0);
     
     // Set page title
-    document.title = 'Features | InstaAdVerifier';
+    document.title = 'Features | Trust Trend';
     
     return () => {
-      document.title = 'InstaAdVerifier';
+      document.title = 'Trust Trend';
     };
   }, []);
   
@@ -38,21 +41,41 @@ const Features = () => {
             </div>
             <h1 className="text-3xl font-display font-bold text-gray-900">Our Features</h1>
             <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
-              Explore the powerful tools and capabilities of InstaAdVerifier
+              Explore the powerful tools and capabilities of Trust Trend
             </p>
+          </div>
+          
+          {/* Ad Analyzer Tool */}
+          <div className="mb-16">
+            <h2 className="text-2xl font-display font-bold mb-6 text-center">
+              Ad & Website Analyzer
+            </h2>
+            <AdAnalyzer />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FeatureCard
               title="Ad Verification"
-              description="Upload screenshots or provide URLs of Instagram clothing ads for instant verification. Our system analyzes multiple factors to determine legitimacy."
+              description="Upload screenshots or provide URLs of clothing ads for instant verification. Our system analyzes multiple factors to determine legitimacy."
               icon={<Image className="h-8 w-8 text-pink-500" />}
+            />
+            
+            <FeatureCard
+              title="Virtual Try-On"
+              description="Virtually try on clothing items before purchasing using our advanced AR technology to see how they look on you."
+              icon={<Shirt className="h-8 w-8 text-blue-500" />}
+            />
+            
+            <FeatureCard
+              title="AI Styling Recommendations"
+              description="Get personalized outfit recommendations based on your preferences, style, and previous purchases using our AI technology."
+              icon={<Sparkles className="h-8 w-8 text-purple-500" />}
             />
             
             <FeatureCard
               title="Verification History"
               description="Access your complete history of verified ads. Review past results and keep track of both legitimate brands and scams you've encountered."
-              icon={<History className="h-8 w-8 text-purple-500" />}
+              icon={<History className="h-8 w-8 text-indigo-500" />}
             />
             
             <FeatureCard

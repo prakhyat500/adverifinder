@@ -36,9 +36,9 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  onClick={() => navigate('/analyzer')}
+                  onClick={() => navigate('/features')}
                 >
-                  Analyze Website
+                  Try Our Features
                 </Button>
               </div>
             </div>
@@ -111,23 +111,23 @@ const Index = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <FeatureCard 
               icon={<ShieldCheck className="h-8 w-8 text-blue-500" />}
-              title="Website Analyzer"
-              description="Instantly analyze clothing store websites to detect potential fraud and scam indicators."
-            />
-            <FeatureCard 
-              icon={<Search className="h-8 w-8 text-blue-500" />}
-              title="Trust Verification"
-              description="Check domain age, contact information, return policies, and other trust signals."
-            />
-            <FeatureCard 
-              icon={<Star className="h-8 w-8 text-blue-500" />}
-              title="Community Reviews"
-              description="Access and contribute to reviews of clothing brands from our trusted user community."
+              title="Fraud Detection"
+              description="Analyze clothing store websites and social media ads to detect potential scams and fraud indicators."
             />
             <FeatureCard 
               icon={<Shirt className="h-8 w-8 text-blue-500" />}
               title="Virtual Try-On"
               description="Virtually try on clothing items before purchasing using our advanced AR technology."
+            />
+            <FeatureCard 
+              icon={<Sparkles className="h-8 w-8 text-blue-500" />}
+              title="AI Styling"
+              description="Get personalized outfit recommendations and styling advice based on your preferences."
+            />
+            <FeatureCard 
+              icon={<Star className="h-8 w-8 text-blue-500" />}
+              title="Community Reviews"
+              description="Access and contribute to reviews of clothing brands from our trusted user community."
             />
           </div>
         </div>

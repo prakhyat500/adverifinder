@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Shield, User, Home, LayoutDashboard, Info, Star, Search, ShoppingBag } from 'lucide-react';
+import { Shield, User, Home, LayoutDashboard, Info, Star, ShoppingBag, Shirt, Sparkles } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,10 +44,11 @@ const Navbar = () => {
         <nav className="hidden md:flex items-center space-x-6">
           <NavLink to="/" label="Home" icon={<Home className="h-4 w-4" />} />
           <NavLink to="/dashboard" label="Dashboard" icon={<LayoutDashboard className="h-4 w-4" />} />
-          <NavLink to="/analyzer" label="Analyzer" icon={<Search className="h-4 w-4" />} />
-          <NavLink to="/about" label="About" icon={<Info className="h-4 w-4" />} />
-          <NavLink to="/features" label="Features" />
+          <NavLink to="/features" label="Features" icon={<Star className="h-4 w-4" />} />
+          <NavLink to="/try-on" label="Virtual Try-On" icon={<Shirt className="h-4 w-4" />} />
+          <NavLink to="/styler" label="AI Styler" icon={<Sparkles className="h-4 w-4" />} />
           <NavLink to="/shop" label="Shop" icon={<ShoppingBag className="h-4 w-4" />} />
+          <NavLink to="/about" label="About" icon={<Info className="h-4 w-4" />} />
           <NavLink to="/reviews" label="Reviews" icon={<Star className="h-4 w-4" />} />
         </nav>
         
