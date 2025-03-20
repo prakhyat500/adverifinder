@@ -1,147 +1,232 @@
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import AdVerifier from '@/components/AdVerifier';
-import VerificationHistory from '@/components/VerificationHistory';
-import VerificationAnalytics from '@/components/VerificationAnalytics';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { History, BarChart3, Settings, LogOut, Instagram, Image, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Shield, AlertTriangle, CheckCircle, Clock, TrendingUp, Zap, Info } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
-type Tab = 'verify' | 'history' | 'analytics' | 'settings';
+interface ActivityItem {
+  id: number;
+  website: string;
+  date: string;
+  result: 'authentic' | 'fake';
+  score: number;
+}
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>('verify');
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const [metrics, setMetrics] = useState({
+    totalScans: 0,
+    fakeDetected: 0,
+    accountStatus: 'Active',
+    usagePercentage: 0,
+    accuracyRate: 0
+  });
+  
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   
   useEffect(() => {
-    // Redirect if not authenticated
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
+    // In a real application, this would be fetched from an API
+    // Simulating data fetch with setTimeout
+    const timer = setTimeout(() => {
+      setMetrics({
+        totalScans: 28,
+        fakeDetected: 7,
+        accountStatus: 'Active',
+        usagePercentage: 35,
+        accuracyRate: 92
+      });
+      
+      setRecentActivity([
+        { id: 1, website: 'fashion-deals.com', date: '2 hours ago', result: 'fake', score: 25 },
+        { id: 2, website: 'nike.com', date: '5 hours ago', result: 'authentic', score: 98 },
+        { id: 3, website: 'amazingstyles.net', date: '1 day ago', result: 'fake', score: 32 },
+        { id: 4, website: 'adidas.com', date: '2 days ago', result: 'authentic', score: 95 },
+        { id: 5, website: 'designerbags-outlet.com', date: '3 days ago', result: 'fake', score: 15 }
+      ]);
+    }, 1000);
     
-    // Scroll to top on page load
-    window.scrollTo(0, 0);
-    
-    // Set page title
-    document.title = 'Dashboard | InstaAdVerifier';
-    
-    return () => {
-      document.title = 'InstaAdVerifier';
-    };
-  }, [isAuthenticated, navigate]);
+    return () => clearTimeout(timer);
+  }, []);
   
-  if (!isAuthenticated) {
-    return null;
-  }
+  useEffect(() => {
+    document.title = 'Dashboard | Trust Trend';
+    return () => {
+      document.title = 'Trust Trend';
+    };
+  }, []);
   
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       
-      <div className="flex-grow pt-24 pb-12 px-4 md:px-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6 px-4 animate-fade-in">
-          <h1 className="text-3xl font-display font-bold">Dashboard</h1>
-          <div className="flex items-center bg-blue-50 text-blue-800 rounded-full px-3 py-1 text-sm">
-            <Instagram className="h-4 w-4 mr-1 text-pink-500" />
-            <span>Clothing Ad Verification Tool</span>
+      <div className="flex-grow pt-24 pb-12 px-4 md:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-display font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Welcome back to your Trust Trend overview</p>
           </div>
-        </div>
-        
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <Card className="sticky top-24 shadow-md border-0 overflow-hidden animate-fade-in">
-              <CardHeader className="bg-gradient-to-r from-pink-500/5 to-purple-500/5 border-b">
-                <CardTitle className="text-lg">Dashboard Menu</CardTitle>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <MetricCard 
+              title="Total Scans"
+              value={metrics.totalScans}
+              description="Websites analyzed"
+              icon={<Shield className="h-8 w-8 text-blue-500" />}
+            />
+            
+            <MetricCard 
+              title="Fake Ads Detected"
+              value={metrics.fakeDetected}
+              description="Potentially fraudulent sites"
+              icon={<AlertTriangle className="h-8 w-8 text-amber-500" />}
+            />
+            
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardDescription>Account Status</CardDescription>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-lg">{metrics.accountStatus}</CardTitle>
+                  <div className={`h-3 w-3 rounded-full ${metrics.accountStatus === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                </div>
               </CardHeader>
-              <CardContent className="p-0">
-                <nav className="flex flex-col">
-                  <SidebarItem 
-                    icon={<Image size={18} />}
-                    label="Verify Ad"
-                    active={activeTab === 'verify'}
-                    onClick={() => setActiveTab('verify')}
-                  />
-                  <SidebarItem 
-                    icon={<History size={18} />}
-                    label="Verification History"
-                    active={activeTab === 'history'}
-                    onClick={() => setActiveTab('history')}
-                  />
-                  <SidebarItem 
-                    icon={<BarChart3 size={18} />}
-                    label="Analytics"
-                    active={activeTab === 'analytics'}
-                    onClick={() => setActiveTab('analytics')}
-                  />
-                  <SidebarItem 
-                    icon={<Settings size={18} />}
-                    label="Account Settings"
-                    active={activeTab === 'settings'}
-                    onClick={() => setActiveTab('settings')}
-                  />
-                  <SidebarItem 
-                    icon={<LogOut size={18} />}
-                    label="Sign Out"
-                    onClick={() => {
-                      localStorage.removeItem('isAuthenticated');
-                      navigate('/');
-                    }}
-                    className="text-red-600 hover:bg-red-50"
-                  />
-                </nav>
+              <CardContent>
+                <div className="mt-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm text-gray-500">Monthly usage</span>
+                    <span className="text-sm font-medium">{metrics.usagePercentage}%</span>
+                  </div>
+                  <Progress value={metrics.usagePercentage} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardDescription>Detection Accuracy</CardDescription>
+                <CardTitle className="text-lg">{metrics.accuracyRate}%</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mt-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm text-gray-500">Overall performance</span>
+                    <span className="text-sm font-medium">High</span>
+                  </div>
+                  <Progress value={metrics.accuracyRate} className="h-2" />
+                </div>
               </CardContent>
             </Card>
           </div>
           
-          {/* Main Content */}
-          <div className="flex-grow pb-6 animate-fade-in">
-            {activeTab === 'verify' && (
-              <div className="space-y-6">
-                <AdVerifier />
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                  <InfoCard 
-                    title="How It Works"
-                    description="Our tool analyzes Instagram clothing ads by examining the account's age, content claims, and other signals to determine if it's a legitimate brand."
-                    icon={<AlertTriangle className="h-8 w-8 text-amber-500" />}
-                  />
-                  <InfoCard 
-                    title="Stay Safe Shopping"
-                    description="Before purchasing from an Instagram clothing ad, verify the brand's legitimacy, check reviews, and use secure payment methods that offer buyer protection."
-                    icon={<Instagram className="h-8 w-8 text-pink-500" />}
-                  />
-                </div>
-              </div>
-            )}
-            
-            {activeTab === 'history' && (
-              <VerificationHistory />
-            )}
-            
-            {activeTab === 'analytics' && (
-              <VerificationAnalytics />
-            )}
-            
-            {activeTab === 'settings' && (
-              <Card className="border-0 shadow-md">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
-                  <CardDescription>Manage your account preferences</CardDescription>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Your latest website analyses</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">Account settings are coming soon.</p>
-                    <p className="text-gray-500 mb-4">This feature is currently under development.</p>
+                  <div className="space-y-4">
+                    {recentActivity.map(activity => (
+                      <div key={activity.id} className="flex items-start border-b pb-4 last:border-0 last:pb-0">
+                        <div className={`mt-0.5 mr-3 p-1.5 rounded-full ${
+                          activity.result === 'authentic' ? 'bg-green-100' : 'bg-red-100'
+                        }`}>
+                          {activity.result === 'authentic' ? (
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <AlertTriangle className="h-5 w-5 text-red-600" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <h4 className="text-sm font-medium">{activity.website}</h4>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {activity.date}
+                            </div>
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className={`text-xs font-medium ${
+                              activity.result === 'authentic' ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {activity.result === 'authentic' ? 'Authentic Website' : 'Fake Website'}
+                            </span>
+                            <span className="text-xs font-medium">
+                              Score: {activity.score}/100
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {recentActivity.length === 0 && (
+                      <div className="text-center py-6 text-gray-500">
+                        No recent activity to display
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
-            )}
+            </div>
+            
+            <div>
+              <Card className="shadow-sm mb-6">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Statistics</CardTitle>
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-600">Fake Detection Rate</span>
+                        <span className="text-sm font-medium">{((metrics.fakeDetected / metrics.totalScans) * 100 || 0).toFixed(1)}%</span>
+                      </div>
+                      <Progress value={((metrics.fakeDetected / metrics.totalScans) * 100) || 0} className="h-1.5" />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-600">Authentic Sites</span>
+                        <span className="text-sm font-medium">{metrics.totalScans - metrics.fakeDetected}</span>
+                      </div>
+                      <Progress value={((metrics.totalScans - metrics.fakeDetected) / metrics.totalScans * 100) || 0} className="h-1.5" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="shadow-sm bg-blue-50">
+                <CardHeader>
+                  <div className="flex items-center">
+                    <Zap className="h-5 w-5 text-blue-500 mr-2" />
+                    <CardTitle>Tips for Better Results</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 text-sm">
+                    <li className="flex">
+                      <Info className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Always check the domain age of suspicious websites</span>
+                    </li>
+                    <li className="flex">
+                      <Info className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Look for secure payment options (PayPal, credit cards)</span>
+                    </li>
+                    <li className="flex">
+                      <Info className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Be cautious of sites with poor grammar or spelling errors</span>
+                    </li>
+                    <li className="flex">
+                      <Info className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Verify contact information and return policies</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
@@ -149,45 +234,25 @@ const Dashboard = () => {
   );
 };
 
-interface SidebarItemProps {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-  className?: string;
-}
-
-const SidebarItem = ({ icon, label, active, onClick, className }: SidebarItemProps) => {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center px-4 py-3 text-sm font-medium transition-colors",
-        active ? "bg-pink-50 text-pink-700 border-l-2 border-pink-500" : "hover:bg-gray-50",
-        className
-      )}
-    >
-      <span className="mr-3">{icon}</span>
-      {label}
-    </button>
-  );
-};
-
-interface InfoCardProps {
+interface MetricCardProps {
   title: string;
+  value: number;
   description: string;
-  icon?: React.ReactNode;
+  icon: React.ReactNode;
 }
 
-const InfoCard = ({ title, description, icon }: InfoCardProps) => {
+const MetricCard = ({ title, value, description, icon }: MetricCardProps) => {
   return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader className="flex flex-row items-start space-y-0 pb-2">
-        {icon && <div className="mr-2">{icon}</div>}
-        <CardTitle className="text-lg">{title}</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <CardDescription>{title}</CardDescription>
+          {icon}
+        </div>
+        <CardTitle className="text-3xl">{value}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-600">{description}</p>
+        <p className="text-sm text-gray-500">{description}</p>
       </CardContent>
     </Card>
   );
