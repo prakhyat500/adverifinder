@@ -1,8 +1,11 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdAnalyzer from '@/components/AdAnalyzer';
+import VirtualTryOnTool from '@/components/VirtualTryOnTool';
+import AIStylingTool from '@/components/AIStylingTool';
 import { 
   Image, 
   History, 
@@ -17,6 +20,8 @@ import {
 } from 'lucide-react';
 
 const Features = () => {
+  const [activeTab, setActiveTab] = useState('analyzer');
+  
   useEffect(() => {
     // Scroll to top on page load
     window.scrollTo(0, 0);
@@ -45,31 +50,49 @@ const Features = () => {
             </p>
           </div>
           
-          {/* Ad Analyzer Tool */}
-          <div className="mb-16">
-            <h2 className="text-2xl font-display font-bold mb-6 text-center">
-              Ad & Website Analyzer
-            </h2>
-            <AdAnalyzer />
+          {/* Main Tools Tabs */}
+          <div className="mb-12">
+            <Tabs 
+              defaultValue="analyzer" 
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-3 mb-8">
+                <TabsTrigger value="analyzer" className="py-3">
+                  <Search className="mr-2 h-4 w-4" />
+                  Ad & Website Analyzer
+                </TabsTrigger>
+                <TabsTrigger value="tryon" className="py-3">
+                  <Shirt className="mr-2 h-4 w-4" />
+                  Virtual Try-On
+                </TabsTrigger>
+                <TabsTrigger value="styler" className="py-3">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI Styling
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="analyzer" className="mt-0">
+                <AdAnalyzer />
+              </TabsContent>
+              
+              <TabsContent value="tryon" className="mt-0">
+                <VirtualTryOnTool />
+              </TabsContent>
+              
+              <TabsContent value="styler" className="mt-0">
+                <AIStylingTool />
+              </TabsContent>
+            </Tabs>
           </div>
           
+          {/* Additional Features Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FeatureCard
               title="Ad Verification"
               description="Upload screenshots or provide URLs of clothing ads for instant verification. Our system analyzes multiple factors to determine legitimacy."
               icon={<Image className="h-8 w-8 text-pink-500" />}
-            />
-            
-            <FeatureCard
-              title="Virtual Try-On"
-              description="Virtually try on clothing items before purchasing using our advanced AR technology to see how they look on you."
-              icon={<Shirt className="h-8 w-8 text-blue-500" />}
-            />
-            
-            <FeatureCard
-              title="AI Styling Recommendations"
-              description="Get personalized outfit recommendations based on your preferences, style, and previous purchases using our AI technology."
-              icon={<Sparkles className="h-8 w-8 text-purple-500" />}
             />
             
             <FeatureCard
@@ -94,18 +117,6 @@ const Features = () => {
               title="Brand Database"
               description="Our system cross-references against a database of verified clothing brands to help identify legitimate retailers versus suspicious newcomers."
               icon={<Database className="h-8 w-8 text-indigo-500" />}
-            />
-            
-            <FeatureCard
-              title="Domain Analysis"
-              description="Automatic checking of website domain age, reputation, and security features to identify newly created scam sites versus established retailers."
-              icon={<Search className="h-8 w-8 text-cyan-500" />}
-            />
-            
-            <FeatureCard
-              title="Secure Account"
-              description="Create a personal account to save your verification history, access your dashboard from any device, and receive updates on emerging scam patterns."
-              icon={<Shield className="h-8 w-8 text-green-500" />}
             />
             
             <FeatureCard
