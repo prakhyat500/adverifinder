@@ -1,14 +1,26 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, AlertTriangle, PieChart, BarChart, TrendingUp } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { AdService, VerificationResult } from '@/services/ad.service';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+
+// Simplified mock data type without backend dependencies
+interface VerificationResult {
+  isScam: boolean;
+  confidence: number;
+  warnings: string[];
+  details: {
+    brand: {
+      name: string;
+    };
+  };
+}
 
 const VerificationAnalytics = () => {
   const { toast } = useToast();
   const [history, setHistory] = useState<VerificationResult[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     fake: 0,
@@ -17,60 +29,51 @@ const VerificationAnalytics = () => {
   });
 
   useEffect(() => {
-    async function loadVerifications() {
-      setIsLoading(true);
-      try {
-        const { success, verifications, error } = await AdService.getUserVerifications();
-        
-        if (success && verifications) {
-          setHistory(verifications);
-          
-          // Calculate statistics
-          const stats = {
-            total: verifications.length,
-            fake: 0,
-            authentic: 0,
-            brands: {} as Record<string, { total: number, fake: number }>
-          };
-          
-          verifications.forEach((item: VerificationResult) => {
-            if (item.isScam) {
-              stats.fake++;
-            } else {
-              stats.authentic++;
-            }
-            
-            const brandName = item.details.brand.name;
-            if (!stats.brands[brandName]) {
-              stats.brands[brandName] = { total: 0, fake: 0 };
-            }
-            
-            stats.brands[brandName].total++;
-            if (item.isScam) {
-              stats.brands[brandName].fake++;
-            }
-          });
-          
-          setStats(stats);
-        } else if (error) {
-          toast({
-            title: "Error",
-            description: error || "Failed to load verification history",
-            variant: "destructive"
-          });
+    // Load mock data or from localStorage instead of fetching from backend
+    setIsLoading(true);
+    try {
+      // Try to get from localStorage
+      const savedHistory = localStorage.getItem('adVerificationHistory');
+      const verifications = savedHistory ? JSON.parse(savedHistory) : [];
+      
+      setHistory(verifications);
+      
+      // Calculate statistics
+      const stats = {
+        total: verifications.length,
+        fake: 0,
+        authentic: 0,
+        brands: {} as Record<string, { total: number, fake: number }>
+      };
+      
+      verifications.forEach((item: VerificationResult) => {
+        if (item.isScam) {
+          stats.fake++;
+        } else {
+          stats.authentic++;
         }
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "An unexpected error occurred",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
+        
+        const brandName = item.details.brand.name;
+        if (!stats.brands[brandName]) {
+          stats.brands[brandName] = { total: 0, fake: 0 };
+        }
+        
+        stats.brands[brandName].total++;
+        if (item.isScam) {
+          stats.brands[brandName].fake++;
+        }
+      });
+      
+      setStats(stats);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to load verification history",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    loadVerifications();
   }, [toast]);
 
   // Get top brands by verification count

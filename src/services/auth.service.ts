@@ -1,6 +1,4 @@
 
-import { supabase } from '@/lib/supabase';
-
 export interface SignUpCredentials {
   email: string;
   password: string;
@@ -14,27 +12,20 @@ export interface LoginCredentials {
 
 export const AuthService = {
   async signUp({ email, password, name }: SignUpCredentials) {
-    console.log('Sending signup request to Supabase:', { email, name });
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name,
-          },
-        },
-      });
-
-      if (error) throw error;
-      console.log('Signup response from Supabase:', data);
+      // Mock signup without backend
+      console.log('Mock signup:', { email, name });
       
       // Store auth state in localStorage for persistence
-      if (data.user) {
-        localStorage.setItem('isAuthenticated', 'true');
-      }
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('user', JSON.stringify({ email, name }));
       
-      return { success: true, data };
+      return { 
+        success: true, 
+        data: { 
+          user: { email, name } 
+        } 
+      };
     } catch (error: any) {
       console.error('Error signing up:', error.message);
       return {
@@ -45,22 +36,20 @@ export const AuthService = {
   },
 
   async login({ email, password }: LoginCredentials) {
-    console.log('Sending login request to Supabase:', { email });
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      console.log('Login response from Supabase:', data);
+      // Mock login without backend
+      console.log('Mock login:', { email });
       
-      // Store auth state in localStorage for persistence
-      if (data.user) {
-        localStorage.setItem('isAuthenticated', 'true');
-      }
+      // For demo purposes, accept any credentials
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('user', JSON.stringify({ email }));
       
-      return { success: true, data };
+      return { 
+        success: true, 
+        data: { 
+          user: { email } 
+        } 
+      };
     } catch (error: any) {
       console.error('Error logging in:', error.message);
       return {
@@ -72,11 +61,9 @@ export const AuthService = {
 
   async logout() {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
       // Clear auth state from localStorage
       localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user');
       
       return { success: true };
     } catch (error: any) {
@@ -90,17 +77,11 @@ export const AuthService = {
 
   async getCurrentUser() {
     try {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw error;
+      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+      const userJson = localStorage.getItem('user');
+      const user = userJson ? JSON.parse(userJson) : null;
       
-      // Update localStorage based on current session
-      if (data.user) {
-        localStorage.setItem('isAuthenticated', 'true');
-      } else {
-        localStorage.removeItem('isAuthenticated');
-      }
-      
-      return { success: true, user: data.user };
+      return { success: true, user };
     } catch (error: any) {
       console.error('Error getting current user:', error.message);
       localStorage.removeItem('isAuthenticated');
